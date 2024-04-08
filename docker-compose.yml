@@ -1,0 +1,78 @@
+version: '3.7'
+services:
+  arch:
+    tty: true
+    container_name: arch
+    build:
+      context: ./my_service
+      dockerfile: release
+    #   dockerfile: debug
+    # volumes:
+    #   - .:/app/
+    environment:
+      - DB_HOST=lab01_postgres
+      - DB_PORT=5432
+      - DB_LOGIN=stud
+      - DB_PASSWORD=stud
+      - DB_DATABASE=archdb
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    networks:
+      - arch-network
+
+  # structurizr:
+  #   image: structurizr/lite
+  #   ports:
+  #     - 8082:8080
+  #   volumes:
+  #     - ./hl_mai_lab_00:/usr/local/structurizr:z
+  #   networks:
+  #     - arch-network
+
+  db:
+    container_name: lab01_postgres
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=stud
+      - POSTGRES_PASSWORD=stud
+      - PGDATA=/data/postgres
+      - POSTGRES_DB=archdb
+    volumes:
+      - db:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d postgres" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - arch-network
+      
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    restart: on-failure
+    networks:
+      - lab02-network
+    volumes:
+      - mongodbdata_lab2:/data/db
+      - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+    ports:
+      - '27017:27017'
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+
+volumes:
+  db:
+  cache:
+  mongodbdata:
+
+networks:
+  arch-network:
+    driver: "bridge"
+    external: false
