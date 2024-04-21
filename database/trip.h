@@ -35,9 +35,10 @@ namespace database
 
             static void init();
             static std::optional<Trip> read_by_id(long id);
-            static std::vector<Trip> read_all();
-            static std::vector<Trip> search(std::string begin);
-            void save_to_db();
+            static std::vector<Trip> read_by_id_owner(long id);
+
+            void   add();
+            void   update();
 
             Poco::JSON::Object::Ptr toJSON() const;
             static Trip fromJSON(const std::string& str);

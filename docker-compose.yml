@@ -5,16 +5,21 @@ services:
     container_name: arch
     build:
       context: ./my_service
-      dockerfile: release
-    #   dockerfile: debug
-    # volumes:
-    #   - .:/app/
+      # dockerfile: release
+      dockerfile: debug
+    volumes:
+      - .:/app/
     environment:
-      - DB_HOST=lab01_postgres
+      - DB_HOST=postgers_db
       - DB_PORT=5432
       - DB_LOGIN=stud
       - DB_PASSWORD=stud
       - DB_DATABASE=archdb
+      - MONGO_HOST=mongo_db
+      - MONGO_PORT=27017
+      - MONGO_LOGIN=stud
+      - MONGO_PASSWORD=stud
+      - MONGO_DATABASE=archdb
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +38,7 @@ services:
   #     - arch-network
 
   db:
-    container_name: lab01_postgres
+    container_name: postgers_db
     image: postgres:15
     environment:
       - POSTGRES_USER=stud
@@ -52,15 +57,15 @@ services:
       retries: 5
     networks:
       - arch-network
-      
-  mongodb:
+  
+  mongo:
     image: mongo:5.0
-    container_name: mongodb
+    container_name: mongo_db
     restart: on-failure
     networks:
-      - lab02-network
+      - arch-network
     volumes:
-      - mongodbdata_lab2:/data/db
+      - mongodbdata:/data/db
       - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
     ports:
       - '27017:27017'

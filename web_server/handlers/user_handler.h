@@ -273,6 +273,7 @@ public:
         root->set("detail", "Request not found");
         root->set("instance", "/user");
         std::ostream &ostr = response.send();
+        std::cout << "Request (USER) not found!" << std::endl;
         Poco::JSON::Stringifier::stringify(root, ostr);
     }
 

@@ -40,19 +40,21 @@ using Poco::Util::ServerApplication;
 #include "http_request_factory.h"
 #include "../database/user.h"
 #include "../database/path.h"
+#include "../database/trip.h"
 
 class HTTPWebServer : public Poco::Util::ServerApplication
 {
 public:
     int main([[maybe_unused]] const std::vector<std::string> &args)
     {
-            database::User::init();
-            database::Path::init();
-            ServerSocket svs(Poco::Net::SocketAddress("0.0.0.0", 8080));
-            HTTPServer srv(new HTTPRequestFactory(DateTimeFormat::SORTABLE_FORMAT), svs, new HTTPServerParams);
-            srv.start();
-            waitForTerminationRequest();
-            srv.stop();
+        database::Trip::init();
+        database::User::init();
+        database::Path::init();
+        ServerSocket svs(Poco::Net::SocketAddress("0.0.0.0", 8080));
+        HTTPServer srv(new HTTPRequestFactory(DateTimeFormat::SORTABLE_FORMAT), svs, new HTTPServerParams);
+        srv.start();
+        waitForTerminationRequest();
+        srv.stop();
 
         return Application::EXIT_OK;
     }

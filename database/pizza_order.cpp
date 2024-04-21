@@ -24,7 +24,7 @@ namespace database
         Poco::Dynamic::Var result = parser.parse(s1+s2);
         Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
-        order.id() = object->getValue<long>("user_id");
+        order.id() = object->getValue<long>("id");
         order.user_id() = object->getValue<long>("user_id");
         order.type() = object->getValue<std::string>("type");
         order.count() = object->getValue<long>("count");
@@ -132,6 +132,7 @@ namespace database
         params["id"] = _id;       
         database::Database::get().update_mongo("orders",params,toJSON());
     }
+    
     Poco::JSON::Object::Ptr PizzaOrder::toJSON() const
     {
         Poco::JSON::Object::Ptr root = new Poco::JSON::Object();

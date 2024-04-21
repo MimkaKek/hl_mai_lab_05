@@ -131,6 +131,7 @@ public:
         root->set("status", Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);
         root->set("detail", "Request not found");
         root->set("instance", "/path");
+        std::cout << "Request (PATH) not found!" << std::endl;
         std::ostream &ostr = response.send();
         Poco::JSON::Stringifier::stringify(root, ostr);
     }

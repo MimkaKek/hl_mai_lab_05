@@ -19,15 +19,16 @@ namespace database
             long               get_id_trip() const;
             long               get_id_participant() const;
 
-            long&        id();
-            long&        id_trip();
-            long&        id_participant();
+            long&              id();
+            long&              id_trip();
+            long&              id_participant();
 
             static void init();
             static std::optional<Party> read_by_id(long id);
-            static std::vector<Party> read_all();
-            static std::vector<Party> search(long id_part);
-            void save_to_db();
+            static std::vector<Party> read_by_id_part(long id_part);
+            static std::vector<Party> read_by_id_trip(long id_trip);
+            void   add();
+            void   update();
 
             Poco::JSON::Object::Ptr toJSON() const;
             static Party fromJSON(const std::string& str);

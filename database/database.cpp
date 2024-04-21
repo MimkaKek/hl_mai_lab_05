@@ -1,12 +1,13 @@
 #include "database.h"
 #include "../config/config.h"
+#include <Poco/MongoDB/ResponseMessage.h>
 #include <stdexcept>
 
 #include <Poco/JSON/Parser.h>
 #include <Poco/Dynamic/Var.h>
 
 namespace database{
-    Database::Database() : database_mongo(Config::get().get_mongo_database())
+    Database::Database() : _database_mongo(Config::get().get_mongo_database())
     {
         _connection_string += "host=";
         _connection_string += Config::get().get_host();
@@ -22,14 +23,15 @@ namespace database{
         std::cout << "# Connecting to postgresql: " << _connection_string << std::endl;
         Poco::Data::PostgreSQL::Connector::registerConnector();
         _pool = std::make_unique<Poco::Data::SessionPool>(Poco::Data::PostgreSQL::Connector::KEY, _connection_string);
-
+        std::cout << "# Status connection to postgresql: " << _pool->isActive() << std::endl;
         std::cout << "# Connecting to mongodb: " << Config::get().get_mongo() << ":" << Config::get().get_mongo_port()  << std::endl;
-        connection_mongo.connect(Config::get().get_mongo(), atoi(Config::get().get_mongo_port().c_str()));
+        _connection_mongo.connect(Config::get().get_mongo(), atoi(Config::get().get_mongo_port().c_str()));
+        std::cout << "# Status connection to mongodb: true" << std::endl;
     }
 
     Poco::MongoDB::Database &Database::get_mongo_database()
     {
-        return database_mongo;
+        return _database_mongo;
     }
 
     Database& Database::get(){
@@ -45,14 +47,14 @@ namespace database{
     {
         try
         {
-            Poco::SharedPtr<Poco::MongoDB::QueryRequest> request = database_mongo.createCountRequest(collection);
+            Poco::SharedPtr<Poco::MongoDB::QueryRequest> request = _database_mongo.createCountRequest(Config::get().get_mongo_database() + '.' + collection);
 
             auto &query = request->selector().addNewDocument("query");
             for (auto &[key, val] : params)
                 query.addNewDocument(key).add("$eq",val);
             
             Poco::MongoDB::ResponseMessage response;
-            connection_mongo.sendRequest(*request, response);
+            _connection_mongo.sendRequest(*request, response);
 
             if ( response.hasDocuments() )
                 return response.documents()[0]->getInteger("n");
@@ -60,7 +62,7 @@ namespace database{
         catch (std::exception &ex)
         {
             std::cout << "mongodb exception: " << ex.what() << std::endl;
-            std::string lastError = database_mongo.getLastError(connection_mongo);
+            std::string lastError = _database_mongo.getLastError(_connection_mongo);
             if (!lastError.empty())
                 std::cout << "mongodb Last Error: " << lastError << std::endl;
         }
@@ -71,7 +73,7 @@ namespace database{
     {
         try
         {
-            Poco::SharedPtr<Poco::MongoDB::UpdateRequest> request = database_mongo.createUpdateRequest(collection);
+            Poco::SharedPtr<Poco::MongoDB::UpdateRequest> request = _database_mongo.createUpdateRequest(Config::get().get_mongo_database() + '.' + collection);
             for (auto &[key, val] : params)
                 request->selector().add(key, val);
             std::function<void(Poco::MongoDB::Document &, Poco::JSON::Object::Ptr &)> fill_document;
@@ -108,12 +110,12 @@ namespace database{
 
             Poco::MongoDB::Document &doc = request->update();
             fill_document(doc, json);
-            connection_mongo.sendRequest(*request);
+            _connection_mongo.sendRequest(*request);
         }
         catch (std::exception &ex)
         {
             std::cout << "mongodb exception: " << ex.what() << std::endl;
-            std::string lastError = database_mongo.getLastError(connection_mongo);
+            std::string lastError = _database_mongo.getLastError(_connection_mongo);
             if (!lastError.empty())
                 std::cout << "mongodb Last Error: " << lastError << std::endl;
         }
@@ -123,7 +125,8 @@ namespace database{
     {
         try
         {
-            Poco::SharedPtr<Poco::MongoDB::InsertRequest> insertRequest = database_mongo.createInsertRequest(collection);
+            std::cout << "Collection: " << Config::get().get_mongo_database() + '.' + collection << std::endl;
+            Poco::SharedPtr<Poco::MongoDB::InsertRequest> insertRequest  = _database_mongo.createInsertRequest(Config::get().get_mongo_database() + '.' + collection);
             std::function<void(Poco::MongoDB::Document &, Poco::JSON::Object::Ptr &)> fill_document;
 
             fill_document = [&](Poco::MongoDB::Document &doc, Poco::JSON::Object::Ptr &obj) -> void
@@ -158,13 +161,14 @@ namespace database{
 
             Poco::MongoDB::Document &doc = insertRequest->addNewDocument();
             fill_document(doc, json);
-            connection_mongo.sendRequest(*insertRequest);
+            std::cout << "Document: " << doc.toString() << std::endl;
+            _connection_mongo.sendRequest(*insertRequest);
 
         }
         catch (std::exception &ex)
         {
             std::cout << "mongodb exception: " << ex.what() << std::endl;
-            std::string lastError = database_mongo.getLastError(connection_mongo);
+            std::string lastError = _database_mongo.getLastError(_connection_mongo);
             if (!lastError.empty())
                 std::cout << "mongodb Last Error: " << lastError << std::endl;
         }
@@ -177,11 +181,11 @@ namespace database{
         try
         {
 
-            Poco::MongoDB::QueryRequest request(collection);
+            Poco::MongoDB::QueryRequest request(Config::get().get_mongo_database() + '.' + collection);
             Poco::MongoDB::ResponseMessage response;
             for (auto &[key, val] : params)
                 request.selector().add(key, val);
-            connection_mongo.sendRequest(request, response);
+            _connection_mongo.sendRequest(request, response);
 
             for (auto doc : response.documents())
                 result.push_back(doc->toString());
@@ -189,7 +193,7 @@ namespace database{
         catch (std::exception &ex)
         {
             std::cout << "mongodb exception: " << ex.what() << std::endl;
-            std::string lastError = database_mongo.getLastError(connection_mongo);
+            std::string lastError = _database_mongo.getLastError(_connection_mongo);
             if (!lastError.empty())
                 std::cout << "mongodb Last Error: " << lastError << std::endl;
         }

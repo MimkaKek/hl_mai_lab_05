@@ -24,7 +24,6 @@ namespace database
 
             Poco::Data::Session session = database::Database::get().create_session();
             Statement create_stmt(session);
-            std::cout << "Test" << std::endl;
 
             create_stmt << "CREATE TABLE IF NOT EXISTS paths (id SERIAL,"
                         << "startpoint VARCHAR(256) NOT NULL,"

@@ -40,6 +40,8 @@ using Poco::Util::HelpFormatter;
 
 #include "handlers/user_handler.h"
 #include "handlers/path_handler.h"
+#include "handlers/trip_handler.h"
+#include "handlers/party_handler.h"
 
 
 class HTTPRequestFactory: public HTTPRequestHandlerFactory
@@ -61,7 +63,15 @@ public:
         if (hasSubstr(request.getURI(),"/path") ||
             hasSubstr(request.getURI(),"/path/search"))
             return new PathHandler(_format);
-            
+
+        if (hasSubstr(request.getURI(),"/trip") ||
+            hasSubstr(request.getURI(),"/trips"))
+            return new TripHandler(_format);
+
+        if (hasSubstr(request.getURI(),"/parties") ||
+            hasSubstr(request.getURI(),"/party"))
+            return new PartyHandler(_format);
+
         return 0;
     }
 

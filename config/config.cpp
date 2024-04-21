@@ -7,6 +7,11 @@ Config::Config()
         _login = std::getenv("DB_LOGIN");
         _password = std::getenv("DB_PASSWORD");
         _database = std::getenv("DB_DATABASE");
+        _mongo = std::getenv("MONGO_HOST");
+        _mongo_port = std::getenv("MONGO_PORT");
+        _mongo_login = std::getenv("MONGO_LOGIN");
+        _mongo_password = std::getenv("MONGO_PASSWORD");
+        _mongo_database = std::getenv("MONGO_DATABASE");
 }
 
 Config &Config::get()
@@ -70,12 +75,24 @@ std::string& Config::mongo(){
 std::string& Config::mongo_port(){
     return _mongo_port;
 }
+std::string& Config::mongo_login(){
+    return _mongo_login;
+}
+std::string& Config::mongo_password(){
+    return _mongo_password;
+}
 std::string& Config::mongo_database(){
     return _mongo_database;
 }
 
 const std::string& Config::get_mongo() const{
     return _mongo;
+}
+const std::string& Config::get_mongo_login()const{
+    return _mongo_login;
+}
+const std::string& Config::get_mongo_password()const{
+    return _mongo_password;
 }
 const std::string& Config::get_mongo_port() const{
     return _mongo_port;
