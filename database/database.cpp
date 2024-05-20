@@ -73,7 +73,7 @@ namespace database{
     {
         try
         {
-            Poco::SharedPtr<Poco::MongoDB::UpdateRequest> request = _database_mongo.createUpdateRequest(Config::get().get_mongo_database() + '.' + collection);
+            Poco::SharedPtr<Poco::MongoDB::UpdateRequest> request = _database_mongo.createUpdateRequest(collection);
             for (auto &[key, val] : params)
                 request->selector().add(key, val);
             std::function<void(Poco::MongoDB::Document &, Poco::JSON::Object::Ptr &)> fill_document;
@@ -126,7 +126,7 @@ namespace database{
         try
         {
             std::cout << "Collection: " << Config::get().get_mongo_database() + '.' + collection << std::endl;
-            Poco::SharedPtr<Poco::MongoDB::InsertRequest> insertRequest  = _database_mongo.createInsertRequest(Config::get().get_mongo_database() + '.' + collection);
+            Poco::SharedPtr<Poco::MongoDB::InsertRequest> insertRequest  = _database_mongo.createInsertRequest(collection);
             std::function<void(Poco::MongoDB::Document &, Poco::JSON::Object::Ptr &)> fill_document;
 
             fill_document = [&](Poco::MongoDB::Document &doc, Poco::JSON::Object::Ptr &obj) -> void
