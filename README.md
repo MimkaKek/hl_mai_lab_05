@@ -21,10 +21,12 @@
 ### OpenAPI 3.0 
 Он оказался слишком громоздким для одного файла index.yaml, поэтому я разделил на 4 файла (на каждый сервис) и поместил в папку [docs](https://github.com/MimkaKek/hl_mai_lab_02/tree/main/docs).
 
+### Запуск
 Для запуска достаточно команды
 
 ```
 docker compose up
 ```
 
+### Заполнение БД
 Скрипт заполнения баз данных реализован в файле [init_db.py](https://github.com/MimkaKek/hl_mai_lab_02/blob/main/init_db.py). К нему прилагаются нужные пакеты в [requerments.txt](https://github.com/MimkaKek/hl_mai_lab_02/blob/main/requirements.txt).
