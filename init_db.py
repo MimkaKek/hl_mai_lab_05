@@ -25,39 +25,46 @@ def main() -> None:
             "login": user["login"],
             "password": user["password"]
         }
-        resp = requests.post(f'http://localhost:8080/user', params=params)
+        resp = requests.post(f'http://localhost:8080/user', params=params, auth=HTTPBasicAuth(user["login"], user["password"]))
         print(f"User add status: {resp.status_code}")
+        print(f"User add body: {resp.text}")
 
     paths = get_json_arr('paths_init.json')
     for path, user in zip(paths, users):
         print(user["login"], user["password"])
-        resp = requests.get("http://localhost:8080/user/auth", auth=HTTPBasicAuth(user["login"], user["password"]))
-        resp_json = resp.json()
-        print(resp_json)
-        token = resp_json.get("Token", "none")
-        params = {
-            "startpoint": path["startpoint"],
-            "endpoint": path["endpoint"]
-        }
-        resp = requests.post(f'http://localhost:8083/path', params=params, auth=BearerAuth(token))
-        print(f"Path add status: {resp.status_code}")
+        resp = requests.get("http://localhost:8080/auth", auth=HTTPBasicAuth(user["login"], user["password"]))
+        try:
+            resp_json = resp.json()
+            print(resp_json)
+            token = resp_json.get("Token", "none")
+            params = {
+                "startpoint": path["startpoint"],
+                "endpoint": path["endpoint"]
+            }
+            resp = requests.post(f'http://localhost:8083/path', params=params, auth=BearerAuth(token))
+            print(f"Path add status: {resp.status_code}")
+        except Exception:
+            pass
     
     trips = get_json_arr('trips_init.json')
     for trip, user in zip(trips, users):
         print(user["login"], user["password"])
-        resp = requests.get("http://localhost:8080/user/auth", auth=HTTPBasicAuth(user["login"], user["password"]))
-        resp_json = resp.json()
-        print(resp_json)
-        token = resp_json.get("Token", "none")
-        params = {
-            "id": trip["id"],
-            "id_path": trip["id_path"],
-            "name": trip["name"],
-            "start_time": trip["start_time"],
-            "fin_time": trip["fin_time"]
-        }
-        resp = requests.post(f'http://localhost:8081/trip', params=params, auth=BearerAuth(token))
-        print(f"Trip add status: {resp.status_code}")
+        resp = requests.get("http://localhost:8080/auth", auth=HTTPBasicAuth(user["login"], user["password"]))
+        try:
+            resp_json = resp.json()
+            print(resp_json)
+            token = resp_json.get("Token", "none")
+            params = {
+                "id": trip["id"],
+                "id_path": trip["id_path"],
+                "name": trip["name"],
+                "start_time": trip["start_time"],
+                "fin_time": trip["fin_time"]
+            }
+            resp = requests.post(f'http://localhost:8081/trip', params=params, auth=BearerAuth(token))
+            print(f"Trip add status: {resp.status_code}")
+        except Exception:
+            pass
 
 if __name__ == '__main__':
     main()
