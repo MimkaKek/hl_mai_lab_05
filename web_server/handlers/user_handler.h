@@ -121,7 +121,7 @@ public:
             std::cout << "scheme: " << scheme << " identity: " << info << std::endl;
             std::string login, password;
 
-            if (hasSubstr(request.getURI(), "/user/auth_check") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET) 
+            if (hasSubstr(request.getURI(), "/auth_check") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET) 
             {
                 if (scheme == "Bearer") {
                     long id_user;
@@ -153,7 +153,7 @@ public:
                                   response);
                 return;
             }
-            else if (hasSubstr(request.getURI(), "/user/auth") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET)
+            else if (hasSubstr(request.getURI(), "/auth") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET)
             {
                 if (scheme == "Basic")
                 {

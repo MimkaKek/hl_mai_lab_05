@@ -102,7 +102,7 @@ bool extract_payload_remote(std::string &jwt_token, long &id, std::string &login
     if (jwt_token.length() == 0) {
         return false;
     }
-    Poco::URI uri("http://" + Config::get().get_user_service_host() + ":" + Config::get().get_user_service_port() + "/user/auth_check");
+    Poco::URI uri("http://" + Config::get().get_user_service_host() + ":" + Config::get().get_user_service_port() + "/auth_check");
     Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
 
     std::string path(uri.getPathAndQuery());
