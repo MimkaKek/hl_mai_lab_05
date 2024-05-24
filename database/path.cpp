@@ -1,17 +1,12 @@
 #include "path.h"
 #include "database.h"
-#include "../config/config.h"
 
 #include <Poco/Data/SessionFactory.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/JSON/Parser.h>
 #include <Poco/Dynamic/Var.h>
 
-#include <sstream>
-#include <exception>
-
 using namespace Poco::Data::Keywords;
-using Poco::Data::Session;
 using Poco::Data::Statement;
 
 namespace database
@@ -21,10 +16,8 @@ namespace database
     {
         try
         {
-
             Poco::Data::Session session = database::Database::get().create_session();
             Statement create_stmt(session);
-
             create_stmt << "CREATE TABLE IF NOT EXISTS paths (id SERIAL,"
                         << "startpoint VARCHAR(256) NOT NULL,"
                         << "endpoint VARCHAR(256) NOT NULL);", now;
@@ -78,7 +71,7 @@ namespace database
                 into(a._startpoint),
                 into(a._endpoint),
                 use(id),
-                range(0, 1); //  iterate over result set one row at a time
+                range(0, 1);
 
             select.execute();
             Poco::Data::RecordSet rs(select);

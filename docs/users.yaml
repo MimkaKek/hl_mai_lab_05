@@ -1,0 +1,302 @@
+openapi: '3.0.0'
+info:
+  version: '1.1.0'
+  title: 'Arch Lab API'
+  description: API для первого домашнего задания по курсу Архитектура программных систем
+servers:
+  - url: http://localhost:8080
+    description: Users server
+paths:
+  /user/search:
+    get:
+      summary: Поиск пользователей по маске имени и фамилии
+      parameters:
+        - $ref: '#/components/parameters/first_name'
+        - $ref: '#/components/parameters/last_name'
+      responses:
+        200:
+          description: Выдаёт список пользователей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/users'
+        404:
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+        500:
+          description: Неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+  /user/auth_check:
+    get:
+      summary: Проверка ключа
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Логин и ID пользователя
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/user_auth_check'
+        401:
+          description: Not authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+  /user/auth:
+    get:
+      summary: Проверка аутентификации
+      responses:
+        200:
+          description: ID пользователя
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/user_auth'
+        401:
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+  /user:
+    get:
+      summary: Чтение информации о пользователе
+      parameters:
+      - $ref: '#/components/parameters/id_user'
+      responses:
+        200:
+          description: Найденный пользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+        404:
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+        500:
+          description: Неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+    post:
+      summary: Добавление нового пользователя
+      parameters:
+      - $ref: "#/components/parameters/first_name"
+      - $ref: "#/components/parameters/last_name"
+      - $ref: "#/components/parameters/email"
+      - $ref: "#/components/parameters/title"
+      - $ref: "#/components/parameters/login"
+      - $ref: "#/components/parameters/password"
+      responses:
+        200:
+          description: Идентификатор, добавленного пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user_id'
+        404:
+          description: Ошибка добавления пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+        500:
+          description: Неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+components:
+  parameters:
+    first_name:
+      name: first_name
+      description: Имя
+      in: query
+      required: true
+      schema:
+        type: string
+    last_name:
+      name: last_name
+      description: Фамилия
+      in: query
+      required: true
+      schema:
+        type: string
+    id_user:
+      name: id
+      description: id пользователя
+      in: query
+      required: true
+      schema:
+        type: integer
+    email:
+      name: email
+      description: email пользователя
+      in: query
+      required: true
+      schema:
+        type: string
+    title:
+      name: title
+      description: Форма обращение к пользователя 
+      in: query
+      required: true
+      schema:
+        type: string
+    login:
+      name: login
+      description: login пользователя
+      in: query
+      required: true
+      schema:
+        type: string
+    password:
+      name: password
+      description: пароль пользователя
+      in: query
+      required: true
+      schema:
+        type: string
+  schemas:
+    user_auth:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/user_id'
+        token:
+          $ref: '#/components/schemas/token'
+    user_auth_check:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/user_id'
+        login:
+          $ref: '#/components/schemas/login'
+    user_id:
+      description: Уникальный идентификатор пользователя
+      type: integer
+    first_name:
+      description: Имя пользователя
+      default: "Имя"
+      type: string
+    last_name:
+      description: Фамилия пользователя
+      default: "Фамилия"
+      type: string
+    email:
+      description: Почта пользователя
+      default: "Какая-то почта"
+      type: string
+    title:
+      description: Описание пользователя
+      default: "Какое-то описание"
+      type: string
+    login:
+      description: Логин пользователя
+      default: "Какой-то логин"
+      type: string
+    password:
+      description: Пароль пользователя
+      default: "*******"
+      type: string
+    token:
+      description: Токен пользователя
+      default: "Длинный токен"
+      type: string
+    users:
+      type: array
+      items:
+        $ref: '#/components/schemas/user'
+    user:
+      type: object
+      required:
+        - id
+        - first_name
+        - last_name
+        - email
+        - title
+        - login
+        - password
+      properties:
+        id:
+          $ref: '#/components/schemas/user_id'
+        first_name:
+          $ref: '#/components/schemas/first_name'
+        last_name:
+          $ref: '#/components/schemas/last_name'
+        email:
+          $ref: '#/components/schemas/email'
+        title:
+          $ref: '#/components/schemas/title'
+        login:
+          $ref: '#/components/schemas/login'
+        password:
+          $ref: '#/components/schemas/password'
+    404:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/not_found"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Request not found"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/user"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "404"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    401:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/not_authorized"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "User not authorized"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/user"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "401"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+  securitySchemes:
+      basicAuth:
+        type: http
+        scheme: basic
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+security:
+  - basicAuth: []

@@ -1,14 +1,9 @@
 #include "party.h"
 #include "database.h"
-#include "../config/config.h"
-
 #include <Poco/Data/SessionFactory.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/JSON/Parser.h>
 #include <Poco/Dynamic/Var.h>
-
-#include <sstream>
-#include <exception>
 
 using namespace Poco::Data::Keywords;
 
@@ -20,37 +15,35 @@ namespace database
     Poco::JSON::Object::Ptr Party::toJSON() const
     {
         Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-        root->set("id", _id);
-        root->set("id_trip", _id);
-        root->set("id_participant", _id);
+        root->set("id_trip", _id_trip);
+        root->set("id_participant", _id_participant);
         return root;
     }
 
-    Party Party::fromJSON(const std::string &str)
+    Party Party::fromJSON(const std::string &str, bool is_mongo = true)
     {
+
+        std::string str_to_parse = str;
+
+        if (is_mongo) {
+            int start = str.find("_id");
+            int end = str.find(",",start);
+            std::string s1 = str.substr(0,start-1);
+            std::string s2 = str.substr(end+1);
+            str_to_parse = s1+s2;
+        }
+
+        std::cout << str_to_parse << std::endl;
+
         Party party;
         Poco::JSON::Parser parser;
-        Poco::Dynamic::Var result = parser.parse(str);
+        Poco::Dynamic::Var result = parser.parse(str_to_parse);
         Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
-        party.id()             = object->getValue<long>("id");
         party.id_trip()        = object->getValue<long>("id_trip");
         party.id_participant() = object->getValue<long>("id_participant");
 
         return party;
-    }
-
-    std::optional<Party> Party::read_by_id(long id)
-    {
-        std::optional<Party> result;
-        std::map<std::string, long> params;
-        params["id"] = id;
-        std::vector<std::string> results = database::Database::get().get_from_mongo("parties",params);
-
-        if(!results.empty())
-            result = fromJSON(results[0]);
-        
-        return result;
     }
 
     std::vector<Party> Party::read_by_id_part(long id_part)
@@ -86,18 +79,6 @@ namespace database
         database::Database::get().send_to_mongo("parties",toJSON());
     }
 
-    void Party::update()
-    {
-        std::map<std::string,long> params;
-        params["id"] = _id;
-        database::Database::get().update_mongo("parties",params,toJSON());
-    }
-
-    long Party::get_id() const
-    {
-        return _id;
-    }
-
     long Party::get_id_trip() const
     {
         return _id_trip;
@@ -106,12 +87,6 @@ namespace database
     long Party::get_id_participant() const
     {
         return _id_participant;
-    }
-
-
-    long &Party::id()
-    {
-        return _id;
     }
 
     long &Party::id_participant()

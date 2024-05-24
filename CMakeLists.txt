@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-SET (EXAMPLE_BINARY "hl_mai_lab_03")
+SET (EXAMPLE_BINARY "hl_mai_lab_02")
 
 find_package(OpenSSL)
 find_package(Threads)
@@ -22,7 +22,8 @@ add_executable(${EXAMPLE_BINARY} main.cpp
                                  database/user.cpp
                                  database/path.cpp
                                  database/party.cpp
-                                 database/trip.cpp)
+                                 database/trip.cpp
+                                 web_server/lib/common.cpp)
 
 
 target_include_directories(${EXAMPLE_BINARY} PRIVATE "${CMAKE_BINARY_DIR}")

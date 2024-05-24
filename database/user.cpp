@@ -1,6 +1,5 @@
 #include "user.h"
 #include "database.h"
-#include "../config/config.h"
 
 #include <Poco/Data/SessionFactory.h>
 #include <Poco/Data/RecordSet.h>
@@ -8,11 +7,8 @@
 #include <Poco/Dynamic/Var.h>
 
 #include <cstddef>
-#include <sstream>
-#include <exception>
 
 using namespace Poco::Data::Keywords;
-using Poco::Data::Session;
 using Poco::Data::Statement;
 
 namespace database
@@ -22,7 +18,6 @@ namespace database
     {
         try
         {
-
             Poco::Data::Session session = database::Database::get().create_session();
             Statement create_stmt(session);
             create_stmt << "CREATE TABLE IF NOT EXISTS users (id SERIAL,"
@@ -266,6 +261,7 @@ namespace database
         {
 
             std::cout << "statement:" << e.what() << std::endl;
+            std::cout << e.message() << std::endl;
             throw;
         }
     }

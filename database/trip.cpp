@@ -1,5 +1,4 @@
 #include "database.h"
-#include "../config/config.h"
 #include "trip.h"
 
 #include <Poco/Data/SessionFactory.h>
@@ -7,8 +6,7 @@
 #include <Poco/JSON/Parser.h>
 #include <Poco/Dynamic/Var.h>
 
-#include <sstream>
-#include <exception>
+#include <ostream>
 #include <string>
 
 using namespace Poco::Data::Keywords;
@@ -16,10 +14,7 @@ using namespace Poco::Data::Keywords;
 namespace database
 {
 
-    void Trip::init()
-    {
-        // TODO
-    }
+    void Trip::init() {}
 
     Poco::JSON::Object::Ptr Trip::toJSON() const
     {
@@ -33,19 +28,31 @@ namespace database
         return root;
     }
 
-    Trip Trip::fromJSON(const std::string &str)
+    Trip Trip::fromJSON(const std::string &str, bool is_mongo = true)
     {
+        std::string str_to_parse = str;
+
+        if (is_mongo) {
+            int start = str.find("_id");
+            int end = str.find(",",start);
+            std::string s1 = str.substr(0,start-1);
+            std::string s2 = str.substr(end+1);
+            str_to_parse = s1+s2;
+        }
+
+        std::cout << str_to_parse << std::endl;
+
         Trip trip;
         Poco::JSON::Parser parser;
-        Poco::Dynamic::Var result = parser.parse(str);
+        Poco::Dynamic::Var result = parser.parse(str_to_parse);
         Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-    
+
         trip.id()         = object->getValue<long>("id");
         trip.id_path()    = object->getValue<long>("id_path");
         trip.id_owner()   = object->getValue<long>("id_owner");
         trip.name()       = object->getValue<std::string>("name");
         trip.start_time() = object->getValue<std::string>("start_time");
-        trip.fin_time()   = object->getValue<std::string>("fin_namer");
+        trip.fin_time()   = object->getValue<std::string>("fin_time");
 
         return trip;
     }
@@ -55,18 +62,12 @@ namespace database
         std::optional<Trip> result;
         std::map<std::string,long> params;
         params["id"] = id;
-        std::cout << "Before get" << std::endl;
+        
         std::vector<std::string> results = database::Database::get().get_from_mongo("trips",params);
-        std::cout << "After get" << std::endl;
 
-        std::cout << "Before empty()" << std::endl;
         if(!results.empty()) {
-            std::cout << "Before fromJSON()" << std::endl;
-            std::cout << results[0] << std::endl;
             result = fromJSON(results[0]);
-            std::cout << "After fromJSON()" << std::endl;
         }
-        std::cout << "Before return result" << std::endl;
         return result;
     }
 
@@ -74,12 +75,18 @@ namespace database
     {
         std::vector<Trip> result;
         std::map<std::string,long> params;
+        std::cout << "id_owner: " << id_owner << std::endl;
         params["id_owner"] = id_owner;
 
         std::vector<std::string> results = database::Database::get().get_from_mongo("trips",params);
 
-        for(std::string& s : results) 
+        for(std::string& s : results) {
+            std::cout << s << std::endl;
             result.push_back(fromJSON(s));
+            std::cout << "Pushed!" << std::endl;
+        }
+
+        std::cout << "readed!";
 
         return result;
     }

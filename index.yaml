@@ -5,7 +5,13 @@ info:
   description: API для первого домашнего задания по курсу Архитектура программных систем
 servers:
   - url: http://localhost:8080
-    description: Example server
+    description: Users server
+  - url: http://localhost:8081
+    description: Trips server
+  - url: http://localhost:8082
+    description: Parties server
+  - url: http://localhost:8083
+    description: Paths server
 paths:
   /user/search:
     get:
@@ -24,7 +30,7 @@ paths:
         schema:
           type: string
       responses:
-        '200':
+        200:
           description: The users for the provided masks
           content:
             application/json:

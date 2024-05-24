@@ -41,7 +41,7 @@ namespace database
             void   update();
 
             Poco::JSON::Object::Ptr toJSON() const;
-            static Trip fromJSON(const std::string& str);
+            static Trip fromJSON(const std::string& str, bool is_mongo);
 
     };
 }

@@ -1,0 +1,252 @@
+openapi: '3.0.0'
+info:
+  version: '1.1.0'
+  title: 'Arch Lab API'
+  description: API для первого домашнего задания по курсу Архитектура программных систем
+servers:
+  - url: http://localhost:8082
+    description: Parties server
+paths:
+  /parties:
+    get:
+      summary: Получение данных о присутствии в путешествиях
+      responses:
+        200:
+          description: Выдаёт данные о присутствии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/parties'
+        401:
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+        403:
+          description: Ошибка получения данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+  /party/join:
+    post:
+      summary: Присоединение в путешествию
+      parameters:
+        - $ref: '#/components/parameters/id_trip'
+      responses:
+        200:
+          description: Присоединяет к путешествию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id_trip'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        401:
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+        403:
+          description: Ошибка получения данных или пользователь уже присоединён к путешествию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+        404:
+          description: Путешествие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+  /party:
+    get:
+      summary: Получение информации о присутствии в путешествии
+      parameters:
+        - $ref: '#/components/parameters/id_trip'
+      responses:
+        200:
+          description: Присоединяет к путешествию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/party'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        401:
+          description: Пользователь не авторизован или не присутствует в путешествии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+        404:
+          description: Путешествие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+    post:
+      summary: Сохранение инфомации о присутствии пользователя в путешествии
+      parameters:
+        - $ref: '#/components/parameters/id_trip'
+      responses:
+        200:
+          description: Сохранение информации и возвращение ID путешествия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id_trip'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        401:
+          description: Пользователь не авторизован или не присутствует в путешествии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+components:
+  parameters:
+    id_trip:
+      name: id
+      description: ID путешествия
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/id_trip'
+  schemas:
+    party:
+      description: Описание мест, где участвует пользователь
+      type: object
+      required:
+        - id_user
+        - id_trip
+      properties:
+        id_user:
+          $ref: '#/components/schemas/id_user'
+        id_trip:
+          $ref: '#/components/schemas/id_trip'
+    parties:
+      type: array
+      items:
+        $ref: '#/components/schemas/party'
+    id_user:
+      description: ID пользователя
+      default: "1"
+      type: integer
+    id_trip:
+      description: ID путешествия
+      default: "1"
+      type: integer
+    404:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/not_found"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Request not found"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/user"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "404"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    403:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/forbidden"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Failed to create new party..."
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "403"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    401:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/not_authorized"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "User not authorized"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "401"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    400:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/bad_request"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Request doesn't have needed data"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "400"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+  securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+security:
+  - bearerAuth: []

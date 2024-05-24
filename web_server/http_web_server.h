@@ -41,6 +41,7 @@ using Poco::Util::ServerApplication;
 #include "../database/user.h"
 #include "../database/path.h"
 #include "../database/trip.h"
+#include "../database/party.h"
 
 class HTTPWebServer : public Poco::Util::ServerApplication
 {
@@ -50,12 +51,12 @@ public:
         database::Trip::init();
         database::User::init();
         database::Path::init();
+        database::Party::init();
         ServerSocket svs(Poco::Net::SocketAddress("0.0.0.0", 8080));
         HTTPServer srv(new HTTPRequestFactory(DateTimeFormat::SORTABLE_FORMAT), svs, new HTTPServerParams);
         srv.start();
         waitForTerminationRequest();
         srv.stop();
-
         return Application::EXIT_OK;
     }
 };

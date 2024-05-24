@@ -1,0 +1,258 @@
+openapi: '3.0.0'
+info:
+  version: '1.1.0'
+  title: 'Arch Lab API'
+  description: API для первого домашнего задания по курсу Архитектура программных систем
+servers:
+  - url: http://localhost:8083
+    description: Paths server
+paths:
+  /path/search:
+    get:
+      summary: Получение данных о маршрутах, начинающихся с указанного места
+      parameters:
+        - $ref: '#/components/parameters/startpoint'
+      responses:
+        200:
+          description: Выдаёт данные о маршрутах
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paths'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        401:
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+        403:
+          description: Ошибка получения маршрутов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+  /path:
+    get:
+      summary: Получение данных о маршруте
+      parameters:
+        - $ref: '#/components/parameters/id_path'
+      responses:
+        200:
+          description: Выдаёт данные о маршруте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/path'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        401:
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+        403:
+          description: Ошибка получения маршрута
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+        404:
+          description: Маршрут не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+    post:
+      summary: Создание маршрута
+      parameters:
+        - $ref: '#/components/parameters/startpoint'
+        - $ref: '#/components/parameters/endpoint'
+      responses:
+        200:
+          description: Выдаёт ID маршрута
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id_path'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        401:
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+        403:
+          description: Ошибка создания маршрута
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+components:
+  parameters:
+    id_path:
+      name: id
+      description: ID маршрута
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/id_path'
+    startpoint:
+      name: Начало
+      description: Место старта
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/startpoint'
+    endpoint:
+      name: Конец
+      description: Место финиша
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/endpoint'
+  schemas:
+    path:
+      description: Описание маршрута
+      type: object
+      required:
+        - id_path
+        - startpoint
+        - endpoint
+      properties:
+        id_path:
+          $ref: '#/components/schemas/id_path'
+        startpoint:
+          $ref: '#/components/schemas/startpoint'
+        endpoint:
+          $ref: '#/components/schemas/endpoint'
+    paths:
+      type: array
+      items:
+        $ref: '#/components/schemas/path'
+    startpoint:
+      description: Место старта
+      default: "Точка А"
+      type: string
+    endpoint:
+      description: Место финиша
+      default: "Точка Б"
+      type: string
+    id_path:
+      description: ID маршрута путешествия
+      default: "1"
+      type: integer
+    404:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/not_found"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Request not found"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/user"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "404"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    403:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/forbidden"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Failed to create new party..."
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "403"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    401:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/not_authorized"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "User not authorized"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "401"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    400:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/bad_request"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Request doesn't have needed data"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "400"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+  securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+security:
+  - bearerAuth: []

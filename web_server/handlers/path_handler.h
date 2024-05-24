@@ -19,7 +19,6 @@
 #include "Poco/Util/Option.h"
 #include "Poco/Util/OptionSet.h"
 #include "Poco/Util/HelpFormatter.h"
-#include "../lib/common.h"
 #include <iostream>
 #include <fstream>
 
@@ -44,7 +43,7 @@ using Poco::Util::OptionSet;
 using Poco::Util::ServerApplication;
 
 #include "../../database/path.h"
-#include "../../helper.h"
+#include "../lib/common.h"
 
 class PathHandler : public HTTPRequestHandler
 {
@@ -56,10 +55,56 @@ public:
     void handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
     {
         HTMLForm form(request, request.stream());
+        std::string instance = "/path";
         try
         {
-            if (hasSubstr(request.getURI(), "/path") && form.has("id") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
+            Poco::JSON::Object::Ptr ret = auth_user(request);
+            if (!ret->getValue<bool>("status")) {
+                response_error(Poco::Net::HTTPResponse::HTTP_UNAUTHORIZED, 
+                                "/errors/not_authorized", 
+                                instance,
+                                "Internal exception", 
+                                "Failed token check...", 
+                                response);
+                return;
+            }
+
+            if (hasSubstr(request.getURI(), "/path/search") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
             {
+                if (!form.has("startpoint"))
+                {
+                    response_error(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, 
+                                   "/errors/bad_request", 
+                                   instance,
+                                   "Internal exception", 
+                                   "Request doesn't have nedeed data...", 
+                                   response);
+                    return;
+                }
+                std::string _startpoint = form.get("startpoint");
+                auto results = database::Path::search(_startpoint);
+                Poco::JSON::Array arr;
+                for (auto s : results)
+                    arr.add(s.toJSON());
+                response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                response.setChunkedTransferEncoding(true);
+                response.setContentType("application/json");
+                std::ostream &ostr = response.send();
+                Poco::JSON::Stringifier::stringify(arr, ostr);
+                return;
+            }
+            else if (hasSubstr(request.getURI(), "/path") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
+            {
+                if (!form.has("id"))
+                {
+                    response_error(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, 
+                                   "/errors/bad_request", 
+                                   instance,
+                                   "Internal exception", 
+                                   "Request doesn't have nedeed data...", 
+                                   response);
+                    return;
+                }
                 long id = atol(form.get("id").c_str());
 
                 std::optional<database::Path> result = database::Path::read_by_id(id);
@@ -74,23 +119,27 @@ public:
                 }
                 else
                 {
-                    response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);
-                    response.setChunkedTransferEncoding(true);
-                    response.setContentType("application/json");
-                    Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                    root->set("type", "/errors/not_found");
-                    root->set("title", "Internal exception");
-                    root->set("status", "404");
-                    root->set("detail", "path not found");
-                    root->set("instance", "/path");
-                    std::ostream &ostr = response.send();
-                    Poco::JSON::Stringifier::stringify(root, ostr);
+                    response_error(Poco::Net::HTTPResponse::HTTP_NOT_FOUND, 
+                                   "/errors/not_found",
+                                   instance,
+                                   "Internal exception", 
+                                   "Path doesn't exists...", 
+                                   response);
                     return;
                 }
             }
-            else if (hasSubstr(request.getURI(), "/path") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST)
-                        && (form.has("startpoint") && form.has("endpoint")))
+            else if (hasSubstr(request.getURI(), "/path") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST))
             {
+                if (!form.has("startpoint") || !form.has("endpoint"))
+                {
+                    response_error(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, 
+                                   "/errors/bad_request", 
+                                   instance,
+                                   "Internal exception", 
+                                   "Request doesn't have nedeed data...", 
+                                   response);
+                    return;
+                }
                 auto path = database::Path();
                 path.startpoint() = form.get("startpoint");
                 path.endpoint()   = form.get("endpoint");
@@ -102,38 +151,24 @@ public:
                 ostr << path.get_id();
                 return;
             }
-            else if (hasSubstr(request.getURI(), "/path/search") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET)
-                        && (form.has("startpoint")))
-            {
-                std::string _startpoint = form.get("startpoint");
-                auto results = database::Path::search(_startpoint);
-                Poco::JSON::Array arr;
-                for (auto s : results)
-                    arr.add(s.toJSON());
-                response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                response.setChunkedTransferEncoding(true);
-                response.setContentType("application/json");
-                std::ostream &ostr = response.send();
-                Poco::JSON::Stringifier::stringify(arr, ostr);
-                return;
-            }
         }
-        catch (...)
+        catch (std::exception &ex)
         {
+            std::cout << "Error: " << ex.what() << std::endl;
+            response_error(Poco::Net::HTTPResponse::HTTP_FORBIDDEN, 
+                            "/errors/forbidden", 
+                            instance,
+                            "Internal exception", 
+                            "Check logs for info...", 
+                            response);
         }
 
-        response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);
-        response.setChunkedTransferEncoding(true);
-        response.setContentType("application/json");
-        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-        root->set("type", "/errors/not_found");
-        root->set("title", "Internal exception");
-        root->set("status", Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);
-        root->set("detail", "Request not found");
-        root->set("instance", "/path");
-        std::cout << "Request (PATH) not found!" << std::endl;
-        std::ostream &ostr = response.send();
-        Poco::JSON::Stringifier::stringify(root, ostr);
+        response_error(Poco::Net::HTTPResponse::HTTP_NOT_FOUND, 
+                        "/errors/not_found", 
+                        instance,
+                        "Internal exception", 
+                        "Request not found", 
+                        response);
     }
 
 private:

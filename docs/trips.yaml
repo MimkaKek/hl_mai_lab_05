@@ -1,0 +1,310 @@
+openapi: '3.0.0'
+info:
+  version: '1.1.0'
+  title: 'Arch Lab API'
+  description: API для первого домашнего задания по курсу Архитектура программных систем
+servers:
+  - url: http://localhost:8081
+    description: Trips server
+paths:
+  /trips:
+    get:
+      summary: Получение данных о путешествиях
+      responses:
+        200:
+          description: Выдаёт данные о путешествии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/trips'
+        403:
+          description: Ошибка получения путешествия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+  /trip:
+    get:
+      summary: Получение данных о путешествии
+      parameters:
+        - $ref: '#/components/parameters/id_trip'
+      responses:
+        200:
+          description: Выдаёт данные о путешествии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/trip'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        401:
+          description: У пользователя нет доступа к путешествию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401'
+        403:
+          description: Ошибка получения путешествия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+        404:
+          description: Путешествие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404'
+    post:
+      summary: Создание путешествия
+      parameters:
+        - $ref: '#/components/parameters/id_trip'
+        - $ref: '#/components/parameters/id_path'
+        - $ref: '#/components/parameters/name'
+        - $ref: '#/components/parameters/start_time'
+        - $ref: '#/components/parameters/fin_time'
+      responses:
+        200:
+          description: Выдаёт ID путешествия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id_trip'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        403:
+          description: Ошибка создания путешествия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+    put:
+      summary: Изменение путешествия
+      parameters:
+        - $ref: '#/components/parameters/id_trip'
+        - $ref: '#/components/parameters/id_path'
+        - $ref: '#/components/parameters/name'
+        - $ref: '#/components/parameters/start_time'
+        - $ref: '#/components/parameters/fin_time'
+      responses:
+        200:
+          description: Выдаёт ID путешествия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id_trip'
+        400:
+          description: Не хватает нужных полей в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400'
+        403:
+          description: Ошибка создания путешествия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/403'
+components:
+  parameters:
+    first_name:
+      name: first_name
+      description: Имя
+      in: query
+      required: true
+      schema:
+        type: string
+    id_trip:
+      name: id
+      description: ID путешествия
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/id_trip'
+    id_path:
+      name: id
+      description: ID маршрута
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/id_path'
+    name:
+      name: id
+      description: Название путешествия
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/name'
+    start_time:
+      name: id
+      description: Время начала путешествия
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/start_time'
+    fin_time:
+      name: id
+      description: Время конца путешествия
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/fin_time'
+  schemas:
+    trip:
+      description: Описание путешествия
+      type: object
+      required:
+        - id_trip
+        - id_owner
+        - id_path
+        - name
+        - start_time
+        - fin_time
+      properties:
+        id_trip:
+          $ref: '#/components/schemas/id_trip'
+        id_owner:
+          $ref: '#/components/schemas/id_owner'
+        id_path:
+          $ref: '#/components/schemas/id_path'
+        name:
+          $ref: '#/components/schemas/name'
+        start_time:
+          $ref: '#/components/schemas/start_time'
+        fin_time:
+          $ref: '#/components/schemas/fin_time'
+    trips:
+      type: array
+      items:
+        $ref: '#/components/schemas/trip'
+    name:
+      description: Название путешествия
+      default: "Название какое-нибудь"
+      type: string
+    start_time:
+      description: Время начала
+      default: "04.10.2024 19:00"
+      type: string
+    fin_time:
+      description: Время конца
+      default: "05.10.2024 23:00"
+      type: string
+    id_trip:
+      description: ID путешествия
+      default: "1"
+      type: integer
+    id_owner:
+      description: ID создателя путешествия
+      default: "1"
+      type: integer
+    id_path:
+      description: ID маршрута путешествия
+      default: "1"
+      type: integer
+    404:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/not_found"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Request not found"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/user"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "404"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    403:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/forbidden"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Failed to create new party..."
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "403"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    401:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/not_authorized"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "User not authorized"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "401"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+    400:
+      type: object
+      properties:
+        type:
+          description: Тип ошибки
+          default: "/errors/bad_request"
+          type: string
+        detail:
+          description: Описание ошибки
+          default: "Request doesn't have needed data"
+          type: string
+        instance:
+          description: Локация ошибки
+          default: "/trip"
+          type: string
+        status:
+          description: Сообщение о ошибке
+          default: "400"
+          type: string
+        title:
+          description: Сообщение о ошибке
+          default: "Internal exception"
+          type: string
+  securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+security:
+  - bearerAuth: []

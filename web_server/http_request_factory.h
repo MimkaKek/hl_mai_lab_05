@@ -69,7 +69,8 @@ public:
             return new TripHandler(_format);
 
         if (hasSubstr(request.getURI(),"/parties") ||
-            hasSubstr(request.getURI(),"/party"))
+            hasSubstr(request.getURI(),"/party") ||
+            hasSubstr(request.getURI(),"/party/join"))
             return new PartyHandler(_format);
 
         return 0;

@@ -43,7 +43,6 @@ using Poco::Util::OptionSet;
 using Poco::Util::ServerApplication;
 
 #include "../../database/party.h"
-#include "../../helper.h"
 #include "../lib/common.h"
 
 class PartyHandler : public HTTPRequestHandler
@@ -54,39 +53,29 @@ public:
     {
     }
 
-    void handleRequest(HTTPServerRequest &request,
-                       HTTPServerResponse &response)
+    void handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
     {
         HTMLForm form(request, request.stream());
+        std::string instance = "/party";
         try
         {
-            std::string scheme;
-            std::string info;
-            long id_user {-1};
-            std::string login;
-            request.getCredentials(scheme, info);
-            std::cout << "scheme: " << scheme << " identity: " << info << std::endl;
-            if(scheme == "Bearer") {
-                if(!extract_payload(info,id_user,login)) {
-                    response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
-                    response.setChunkedTransferEncoding(true);
-                    response.setContentType("application/json");
-                    Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                    root->set("type", "/errors/not_authorized");
-                    root->set("title", "Internal exception");
-                    root->set("status", "403");
-                    root->set("detail", "user not authorized");
-                    root->set("instance", "/trip");
-                    std::ostream &ostr = response.send();
-                    Poco::JSON::Stringifier::stringify(root, ostr);
-                    return;                   
-                }
+            Poco::JSON::Object::Ptr ret = auth_user(request);
+            if (!ret->getValue<bool>("status")) {
+                response_error(Poco::Net::HTTPResponse::HTTP_UNAUTHORIZED, 
+                                "/errors/not_authorized", 
+                                instance,
+                                "Internal exception", 
+                                "Failed token check...", 
+                                response);
+                return;
             }
-            std::cout << "id:" << id_user << " login:" << login << std::endl;
+
+            long id_user         = ret->getValue<long>("id_user");
+            std::string login    = ret->getValue<std::string>("login");
+            std::string authinfo = ret->getValue<std::string>("authinfo");
 
             if (hasSubstr(request.getURI(), "/parties") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
             {
-                //long id = atol(form.get("user_id").c_str());
                 auto results = database::Party::read_by_id_part(id_user);
                 Poco::JSON::Array arr;
                 for (auto s : results)
@@ -99,55 +88,115 @@ public:
 
                 return;
             }
-            else if (hasSubstr(request.getURI(), "/party") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
-            {   
-                long id_party = atol(form.get("id").c_str());
-
-                std::optional<database::Party> result = database::Party::read_by_id(id_party);
-                if (result)
+            else if (hasSubstr(request.getURI(), "/party/join") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST))
+            {
+                if (!form.has("id_trip"))
                 {
-                    if(result->get_id_participant() != id_user) {
-                        response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
-                        response.setChunkedTransferEncoding(true);
-                        response.setContentType("application/json");
-                        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                        root->set("type", "/errors/not_authorized");
-                        root->set("title", "Internal exception");
-                        root->set("status", "403");
-                        root->set("detail", "User not in party");
-                        root->set("instance", "/party");
-                        std::ostream &ostr = response.send();
-                        Poco::JSON::Stringifier::stringify(root, ostr);
+                    response_error(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, 
+                                   "/errors/bad_request", 
+                                   instance,
+                                   "Internal exception", 
+                                   "Request doesn't have nedeed data...", 
+                                   response);
+                    return;
+                }
+                long id_trip = atol(form.get("id_trip").c_str());
+                std::optional<std::vector<database::Party>> result = database::Party::read_by_id_trip(id_trip);
+                if (!result)
+                {
+                    response_error(Poco::Net::HTTPResponse::HTTP_NOT_FOUND, 
+                                   "/errors/not_found",
+                                   instance,
+                                   "Internal exception", 
+                                   "Party doesn't exists...", 
+                                   response);
+                    return;
+                }
+
+                for (auto party: *result) {
+                    if(party.get_id_participant() == id_user) {
+                        response_error(Poco::Net::HTTPResponse::HTTP_FORBIDDEN, 
+                                        "/errors/already_exists",
+                                        instance,
+                                        "Internal exception", 
+                                        "Party already exists...", 
+                                        response);
                         return;                   
                     }
+                }
 
-                    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                    response.setChunkedTransferEncoding(true);
-                    response.setContentType("application/json");
-                    std::ostream &ostr = response.send();
-                    Poco::JSON::Stringifier::stringify(result->toJSON(), ostr);
+                database::Party party;
+                party.id_participant() = id_user;
+                party.id_trip() = id_trip;
+                party.add();
+                response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                response.setChunkedTransferEncoding(true);
+                response.setContentType("application/json");
+                std::ostream &ostr = response.send();
+                ostr << party.get_id_trip();
+                return;
+                
+            }
+            else if (hasSubstr(request.getURI(), "/party") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
+            {
+                if (!form.has("id_trip"))
+                {
+                    response_error(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, 
+                                   "/errors/bad_request", 
+                                   instance,
+                                   "Internal exception", 
+                                   "Request doesn't have nedeed data...", 
+                                   response);
+                    return;
+                }
+                long id_trip = atol(form.get("id_trip").c_str());
+
+                std::optional<std::vector<database::Party>> result = database::Party::read_by_id_trip(id_trip);
+                if (result)
+                {
+                    for (auto party: *result) {
+                        if(party.get_id_participant() == id_user) {
+                            response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                            response.setChunkedTransferEncoding(true);
+                            response.setContentType("application/json");
+                            std::ostream &ostr = response.send();
+                            Poco::JSON::Stringifier::stringify(party.toJSON(), ostr);
+                            return;                   
+                        }
+                    }
+                    
+                    response_error(Poco::Net::HTTPResponse::HTTP_UNAUTHORIZED, 
+                                   "/errors/not_authorized",
+                                   instance,
+                                   "Internal exception", 
+                                   "User not in party...", 
+                                   response);
                     return;
                 }
                 else
                 {
-                    response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);
-                    response.setChunkedTransferEncoding(true);
-                    response.setContentType("application/json");
-                    Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                    root->set("type", "/errors/not_found");
-                    root->set("title", "Internal exception");
-                    root->set("status", "404");
-                    root->set("detail", "Not found by party id");
-                    root->set("instance", "/party");
-                    std::ostream &ostr = response.send();
-                    Poco::JSON::Stringifier::stringify(root, ostr);
+                    response_error(Poco::Net::HTTPResponse::HTTP_NOT_FOUND, 
+                                   "/errors/not_found",
+                                   instance,
+                                   "Internal exception", 
+                                   "Party doesn't exists...", 
+                                   response);
                     return;
                 }
             }
             else if (hasSubstr(request.getURI(), "/party") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST)
             {
+                if (!form.has("id_trip"))
+                {
+                    response_error(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, 
+                                   "/errors/bad_request", 
+                                   instance,
+                                   "Internal exception", 
+                                   "Request doesn't have nedeed data...", 
+                                   response);
+                    return;
+                }
                 database::Party party;
-                party.id() = atol(form.get("id").c_str());
                 party.id_participant() = id_user;
                 party.id_trip() = atol(form.get("id_trip").c_str());
                 party.add();
@@ -155,44 +204,27 @@ public:
                 response.setChunkedTransferEncoding(true);
                 response.setContentType("application/json");
                 std::ostream &ostr = response.send();
-                ostr << party.get_id();
-                return;
-            }
-            else if (hasSubstr(request.getURI(), "/party") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_PUT)
-            {
-                database::Party party;
-                party.id() = atol(form.get("id").c_str());
-                party.id_participant() = id_user;
-                party.id_trip() = atol(form.get("id_trip").c_str());
-                party.add();
-
-                party.update();
-
-                response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                response.setChunkedTransferEncoding(true);
-                response.setContentType("application/json");
-                std::ostream &ostr = response.send();
-                ostr << party.get_id();
+                ostr << party.get_id_trip();
                 return;
             }
         }
-        catch (std::exception &ex)
+        catch (std::exception &e)
         {
-            std::cout << "Exception:" << ex.what() << std::endl;
+            std::cout << e.what() << std::endl;
+            response_error(Poco::Net::HTTPResponse::HTTP_FORBIDDEN, 
+                            "/errors/forbidden", 
+                            instance,
+                            "Internal exception", 
+                            "Check logs for info...", 
+                            response);
         }
 
-        response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);
-        response.setChunkedTransferEncoding(true);
-        response.setContentType("application/json");
-        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-        root->set("type", "/errors/not_found");
-        root->set("title", "Internal exception");
-        root->set("status", Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);
-        root->set("detail", "Request not found");
-        root->set("instance", "/party");
-        std::ostream &ostr = response.send();
-        std::cout << "Request (PARTY) not found!" << std::endl;
-        Poco::JSON::Stringifier::stringify(root, ostr);
+        response_error(Poco::Net::HTTPResponse::HTTP_NOT_FOUND, 
+                        "/errors/not_found", 
+                        instance,
+                        "Internal exception", 
+                        "Request not found", 
+                        response);
     }
 
 private:

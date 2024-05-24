@@ -1,7 +1,6 @@
 #include "database.h"
 #include "../config/config.h"
 #include <Poco/MongoDB/ResponseMessage.h>
-#include <stdexcept>
 
 #include <Poco/JSON/Parser.h>
 #include <Poco/Dynamic/Var.h>
@@ -24,6 +23,7 @@ namespace database{
         Poco::Data::PostgreSQL::Connector::registerConnector();
         _pool = std::make_unique<Poco::Data::SessionPool>(Poco::Data::PostgreSQL::Connector::KEY, _connection_string);
         std::cout << "# Status connection to postgresql: " << _pool->isActive() << std::endl;
+
         std::cout << "# Connecting to mongodb: " << Config::get().get_mongo() << ":" << Config::get().get_mongo_port()  << std::endl;
         _connection_mongo.connect(Config::get().get_mongo(), atoi(Config::get().get_mongo_port().c_str()));
         std::cout << "# Status connection to mongodb: true" << std::endl;
@@ -35,7 +35,9 @@ namespace database{
     }
 
     Database& Database::get(){
+        std::cout << "Database instance init..." << std::endl;
         static Database _instance;
+        std::cout << "Database instance created" << std::endl;
         return _instance;
     }
 
@@ -47,7 +49,7 @@ namespace database{
     {
         try
         {
-            Poco::SharedPtr<Poco::MongoDB::QueryRequest> request = _database_mongo.createCountRequest(Config::get().get_mongo_database() + '.' + collection);
+            Poco::SharedPtr<Poco::MongoDB::QueryRequest> request = _database_mongo.createCountRequest(collection);
 
             auto &query = request->selector().addNewDocument("query");
             for (auto &[key, val] : params)
@@ -125,8 +127,7 @@ namespace database{
     {
         try
         {
-            std::cout << "Collection: " << Config::get().get_mongo_database() + '.' + collection << std::endl;
-            Poco::SharedPtr<Poco::MongoDB::InsertRequest> insertRequest  = _database_mongo.createInsertRequest(collection);
+            Poco::SharedPtr<Poco::MongoDB::InsertRequest> insertRequest = _database_mongo.createInsertRequest(collection);
             std::function<void(Poco::MongoDB::Document &, Poco::JSON::Object::Ptr &)> fill_document;
 
             fill_document = [&](Poco::MongoDB::Document &doc, Poco::JSON::Object::Ptr &obj) -> void
@@ -161,7 +162,7 @@ namespace database{
 
             Poco::MongoDB::Document &doc = insertRequest->addNewDocument();
             fill_document(doc, json);
-            std::cout << "Document: " << doc.toString() << std::endl;
+            std::cout << doc.toString() << std::endl;
             _connection_mongo.sendRequest(*insertRequest);
 
         }
@@ -176,16 +177,16 @@ namespace database{
 
     std::vector<std::string> Database::get_from_mongo([[maybe_unused]] const std::string &collection, [[maybe_unused]] std::map<std::string, long> &params)
     {
-       std::vector<std::string> result;
+        std::vector<std::string> result;
 
         try
         {
 
-            Poco::MongoDB::QueryRequest request(Config::get().get_mongo_database() + '.' + collection);
+            Poco::SharedPtr<Poco::MongoDB::QueryRequest> request = _database_mongo.createQueryRequest(collection);
             Poco::MongoDB::ResponseMessage response;
             for (auto &[key, val] : params)
-                request.selector().add(key, val);
-            _connection_mongo.sendRequest(request, response);
+                request->selector().add(key, val);
+            _connection_mongo.sendRequest(*request, response);
 
             for (auto doc : response.documents())
                 result.push_back(doc->toString());
