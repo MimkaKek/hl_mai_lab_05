@@ -14,11 +14,14 @@ RUN git clone -b poco-1.12.4-release https://github.com/pocoproject/poco.git &&\
 
 RUN git clone https://github.com/tdv/redis-cpp.git &&\
     cd redis-cpp &&\
-    mkdir build  &&\
-    cd build &&\
-    cmake .. &&\
-    make &&\
+    mkdir build &&\ 
+    cd build &&\ 
+    cmake .. &&\ 
+    make &&\ 
     make install &&\
-    cd && rm -rf redis-cpp/*
+    cd .. 
 
-CMD [ "/bin/bash", "-c", "while [ 1 = 1 ]; do sleep 300; done" ]
+RUN ldconfig
+ADD . /app
+RUN cd /app && mkdir build && cd build && cmake .. && make
+ENTRYPOINT [ "/app/build/service" ]

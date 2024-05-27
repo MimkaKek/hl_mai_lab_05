@@ -95,7 +95,7 @@ class TripHandler : public HTTPRequestHandler
             }
             else if (hasSubstr(request.getURI(), "/trip") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
             {
-                if (!form.has("id_trip"))
+                if (!form.has("id"))
                 {
                     response_error(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, 
                                    "/errors/bad_request", 
@@ -105,7 +105,7 @@ class TripHandler : public HTTPRequestHandler
                                    response);
                     return;
                 }
-                long id = atol(form.get("id_trip").c_str());
+                long id = atol(form.get("id").c_str());
                 if (!is_in_party(authinfo, id)) {
                     response_error(Poco::Net::HTTPResponse::HTTP_UNAUTHORIZED, 
                                    "/errors/not_authorized",
@@ -139,7 +139,7 @@ class TripHandler : public HTTPRequestHandler
             }
             else if (hasSubstr(request.getURI(), "/trip") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST)
             {
-                if (!form.has("id_trip") || !form.has("id_path") || !form.has("name") || !form.has("start_time") || !form.has("fin_time"))
+                if (!form.has("id") || !form.has("id_path") || !form.has("name") || !form.has("start_time") || !form.has("fin_time"))
                 {
                     response_error(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, 
                                    "/errors/bad_request", 
@@ -150,7 +150,7 @@ class TripHandler : public HTTPRequestHandler
                     return;
                 }
                 database::Trip trip;
-                trip.id() = atol(form.get("id_trip").c_str());
+                trip.id() = atol(form.get("id").c_str());
                 trip.id_owner() = id_user;
                 trip.id_path() = atol(form.get("id_path").c_str());
                 trip.name() = form.get("name");

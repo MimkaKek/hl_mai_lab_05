@@ -113,6 +113,8 @@ public:
     {
         HTMLForm form(request, request.stream());
         std::string instance {"/user"};
+        std::cout << "Resource: " << request.getURI() << std::endl;
+        std::cout << "Method: " << request.getMethod() << std::endl;
         try
         {
             std::string scheme;
@@ -123,7 +125,7 @@ public:
 
             if (hasSubstr(request.getURI(), "/auth_check") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET) 
             {
-                if (scheme == "Bearer") {
+                if (scheme == AUTH_BEARER) {
                     long id_user;
                     if(!extract_payload_local(info,id_user,login)) {
                         response_error(Poco::Net::HTTPResponse::HTTP_UNAUTHORIZED, 
@@ -155,7 +157,7 @@ public:
             }
             else if (hasSubstr(request.getURI(), "/auth") && request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET)
             {
-                if (scheme == "Basic")
+                if (scheme == AUTH_BASIC)
                 {
                     get_identity(info, login, password);
                     auto hasher = Poco::Hash<std::string>();
@@ -167,7 +169,7 @@ public:
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");
                         std::ostream &ostr = response.send();
-                        ostr << "{ \"id\" : \"" << *id << "\", \"Token\" : \""<< token <<"\"}" << std::endl;
+                        ostr << token;
                         return;
                     }
                 }

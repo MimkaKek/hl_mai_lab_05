@@ -54,7 +54,7 @@ public:
 
     HTTPRequestHandler* createRequestHandler(const HTTPServerRequest& request)
     {
-        std::cout << "request:" << request.getURI()<< std::endl;
+        std::cout << "Handle Request (" << request.getMethod() << "): " << request.getURI() << std::endl;
         if (hasSubstr(request.getURI(),"/user") ||
             hasSubstr(request.getURI(),"/user/search") ||
             hasSubstr(request.getURI(),"/auth_check") ||

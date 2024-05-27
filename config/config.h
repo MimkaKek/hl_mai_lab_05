@@ -23,6 +23,15 @@ class  Config{
 
         std::string _party_service_host;
         std::string _party_service_port;
+
+        std::string _path_service_host;
+        std::string _path_service_port;
+
+        std::string _trip_service_host;
+        std::string _trip_service_port;
+
+        std::string _redis_cache_host;
+        std::string _redis_cache_port;
     public:
         static Config& get();
 
@@ -42,6 +51,15 @@ class  Config{
         std::string& party_service_host();
         std::string& party_service_port();
 
+        std::string& path_service_host();
+        std::string& path_service_port();
+
+        std::string& trip_service_host();
+        std::string& trip_service_port();
+
+        std::string& redis_cache_host();
+        std::string& redis_cache_port();
+
         const std::string& get_port() const ;
         const std::string& get_host() const ;
         const std::string& get_login() const ;
@@ -52,11 +70,20 @@ class  Config{
         const std::string& get_mongo_port() const;
         const std::string& get_mongo_database() const;
 
-        const std::string& get_user_service_host() const ;
-        const std::string& get_user_service_port() const ;
+        const std::string& get_user_service_host() const;
+        const std::string& get_user_service_port() const;
 
-        const std::string& get_party_service_host() const ;
-        const std::string& get_party_service_port() const ;
+        const std::string& get_party_service_host() const;
+        const std::string& get_party_service_port() const;
+
+        const std::string& get_path_service_host() const;
+        const std::string& get_path_service_port() const;
+
+        const std::string& get_trip_service_host() const;
+        const std::string& get_trip_service_port() const;
+
+        const std::string& get_redis_cache_host() const;
+        const std::string& get_redis_cache_port() const;
 };
 
 #endif

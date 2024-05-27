@@ -1,5 +1,9 @@
 #include "common.h"
+#include <Poco/Net/HTTPResponse.h>
+#include <Poco/StreamCopier.h>
 #include <cstddef>
+#include <iostream>
+#include <sstream>
 #include <string>
 
 
@@ -102,23 +106,24 @@ bool extract_payload_remote(std::string &jwt_token, long &id, std::string &login
     if (jwt_token.length() == 0) {
         return false;
     }
-    Poco::URI uri("http://" + Config::get().get_user_service_host() + ":" + Config::get().get_user_service_port() + "/auth_check");
-    Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
 
-    std::string path(uri.getPathAndQuery());
-    Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
-    req.setCredentials("Bearer", jwt_token);
-    session.sendRequest(req);
-    Poco::Net::HTTPResponse res;
-    std::istream &is = session.receiveResponse(res);
-    if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK) {
+    std::string url_path        = "http://" + Config::get().get_user_service_host() + ":" + Config::get().get_user_service_port();
+    std::string urn_path        = "/auth_check";
+    std::string auth_type       = AUTH_BEARER;
+    std::string uri_path        = url_path + urn_path;
+    std::string body            = "";
+    std::string body_response   = "";
+    Poco::Net::HTTPResponse::HTTPStatus status;
+    
+    send_request(Poco::Net::HTTPRequest::HTTP_GET, uri_path, auth_type, jwt_token, body, body_response, status);
+    if (status != Poco::Net::HTTPResponse::HTTP_OK) {
         return false;
     }
 
     Poco::JSON::Parser parser;
-    Poco::Dynamic::Var result = parser.parse(is);
+    Poco::Dynamic::Var result = parser.parse(body_response);
     Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-    id = object->getValue<long>("id");
+    id    = object->getValue<long>("id");
     login = object->getValue<std::string>("login");
 
     return true;
@@ -128,37 +133,34 @@ bool init_party_remote(std::string &jwt_token, long id_trip) {
     if (jwt_token.length() == 0) {
         return false;
     }
-    Poco::URI uri("http://" + Config::get().get_party_service_host() + ":" + Config::get().get_party_service_port() + "/party?id_trip=" + std::to_string(id_trip));
-    Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
-    std::string path(uri.getPathAndQuery());
-    Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_POST, path, Poco::Net::HTTPMessage::HTTP_1_1);
-    req.setCredentials("Bearer", jwt_token);
-    session.sendRequest(req);
-    Poco::Net::HTTPResponse res;
-    session.receiveResponse(res);
-    if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK) {
-        return false;
-    }
-    return true;
+    std::string url_path        = "http://" + Config::get().get_party_service_host() + ":" + Config::get().get_party_service_port();
+    std::string urn_path        = "/party?id_trip=" + std::to_string(id_trip);
+    std::string uri_path        = url_path + urn_path;
+    std::string auth_type       = AUTH_BEARER;
+    std::string body            = "";
+    std::string body_response   = "";
+    Poco::Net::HTTPResponse::HTTPStatus status;
+    send_request(Poco::Net::HTTPRequest::HTTP_POST, uri_path, auth_type, jwt_token, body, body_response, status);
+    return (status == Poco::Net::HTTPResponse::HTTP_OK);
 }
 
 Poco::JSON::Array::Ptr get_parties(std::string &jwt_token) {
     if (jwt_token.length() == 0) {
         return nullptr;
     }
-    Poco::URI uri("http://" + Config::get().get_party_service_host() + ":" + Config::get().get_party_service_port() + "/parties");
-    Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
-    std::string path(uri.getPathAndQuery());
-    Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
-    req.setCredentials("Bearer", jwt_token);
-    session.sendRequest(req);
-    Poco::Net::HTTPResponse res;
-    std::istream &response_data = session.receiveResponse(res);
-    if (res.getStatus() != Poco::Net::HTTPResponse::HTTP_OK) {
+    std::string url_path        = "http://" + Config::get().get_party_service_host() + ":" + Config::get().get_party_service_port();
+    std::string urn_path        = "/parties";
+    std::string uri_path        = url_path + urn_path;
+    std::string auth_type       = AUTH_BEARER;
+    std::string body            = "";
+    std::string body_response   = "";
+    Poco::Net::HTTPResponse::HTTPStatus status;
+    send_request(Poco::Net::HTTPRequest::HTTP_GET, uri_path, auth_type, jwt_token, body, body_response, status);
+    if (status != Poco::Net::HTTPResponse::HTTP_OK) {
         return nullptr;
     }
     Poco::JSON::Parser parser;
-    Poco::Dynamic::Var result = parser.parse(response_data);
+    Poco::Dynamic::Var result = parser.parse(body_response);
     return result.extract<Poco::JSON::Array::Ptr>();
 }
 
@@ -166,34 +168,91 @@ bool is_in_party(std::string &jwt_token, long &id_trip) {
     if (jwt_token.length() == 0) {
         return false;
     }
-    Poco::URI uri("http://" + Config::get().get_party_service_host() + ":" + Config::get().get_party_service_port() + "/party?id_trip=" + std::to_string(id_trip));
-    Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
-    std::string path(uri.getPathAndQuery());
-    Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
-    req.setCredentials("Bearer", jwt_token);
-    session.sendRequest(req);
-    Poco::Net::HTTPResponse res;
-    session.receiveResponse(res);
-    return (res.getStatus() == Poco::Net::HTTPResponse::HTTP_OK);
-
+    std::string url_path        = "http://" + Config::get().get_party_service_host() + ":" + Config::get().get_party_service_port();
+    std::string urn_path        = "/party?id_trip=" + std::to_string(id_trip);
+    std::string uri_path        = url_path + urn_path;
+    std::string auth_type       = AUTH_BEARER;
+    std::string body            = "";
+    std::string body_response   = "";
+    Poco::Net::HTTPResponse::HTTPStatus status;
+    send_request(Poco::Net::HTTPRequest::HTTP_GET, uri_path, auth_type, jwt_token, body, body_response, status);
+    return (status == Poco::Net::HTTPResponse::HTTP_OK);
 }
 
-void response_error(Poco::Net::HTTPResponse::HTTPStatus code, 
-                    std::string type, 
-                    std::string instance, 
-                    std::string title, 
-                    std::string detail, 
-                    HTTPServerResponse &response)
-{
-    response.setStatus(code);
+void send_response(Poco::Net::HTTPServerResponse& response, Poco::Net::HTTPResponse::HTTPStatus status, std::string& body_response) {
+    response.setStatus(status);
     response.setChunkedTransferEncoding(true);
     response.setContentType("application/json");
+    std::ostream &ostr = response.send();
+    ostr << body_response;
+    ostr.flush();
+}
+
+void response_error(const Poco::Net::HTTPResponse::HTTPStatus &status, 
+                    const std::string &type, 
+                    const std::string &instance, 
+                    const std::string &title, 
+                    const std::string &detail, 
+                    HTTPServerResponse &response)
+{
     Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
     root->set("type", type);
     root->set("title", title);
-    root->set("status", code);
+    root->set("status", std::to_string(status));
     root->set("detail", detail);
     root->set("instance", instance);
-    std::ostream &ostr = response.send();
-    Poco::JSON::Stringifier::stringify(root, ostr);
+    std::stringstream ss;
+    Poco::JSON::Stringifier::stringify(root, ss);
+    std::string body_response = ss.str();
+    send_response(response, status, body_response);
+}
+
+
+
+void send_request(const std::string &method, 
+                  const std::string &uri_path,
+                  const std::string &auth_type, 
+                  const std::string &auth_value, 
+                  const std::string &body,
+                  std::string &body_response,
+                  Poco::Net::HTTPResponse::HTTPStatus &status)
+{
+    try
+    {
+        std::cout << "Making request ("<< method << "): " << uri_path << std::endl;
+        std::cout << "Authorization: '" << auth_type << "' '" << auth_value << "'" << std::endl;
+        std::cout << "Request body:\n" << body << std::endl;
+
+        Poco::URI uri(uri_path);
+        std::string path(uri.getPathAndQuery());
+        Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
+        Poco::Net::HTTPRequest request(method, path, Poco::Net::HTTPMessage::HTTP_1_1);
+        
+        request.setContentType("application/json");
+        request.setContentLength(body.length());
+        if (!auth_type.empty() && !auth_value.empty())
+        {
+            request.set("Authorization", auth_type + " " + auth_value);
+        }
+        session.sendRequest(request) << body;
+
+        Poco::Net::HTTPResponse response;
+        std::istream &rs = session.receiveResponse(response);
+        status = response.getStatus();
+        std::stringstream ss;
+        Poco::StreamCopier::copyStream(rs, ss);
+        body_response = ss.str();
+        std::cout << "Response Status: " << status << std::endl;
+        std::cout << "Response Body:\n" << body_response << std::endl;
+        return;
+    }
+    catch (Poco::Exception &ex)
+    {
+        std::cerr << "Send Request Exception: " << ex.displayText() << std::endl;
+        std::cerr << "Message: " << ex.message() << std::endl;
+        status = Poco::Net::HTTPResponse::HTTP_FORBIDDEN;
+        return;
+    }
+    status = Poco::Net::HTTPResponse::HTTP_FORBIDDEN;
+    return;
 }

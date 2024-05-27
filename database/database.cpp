@@ -35,9 +35,7 @@ namespace database{
     }
 
     Database& Database::get(){
-        std::cout << "Database instance init..." << std::endl;
         static Database _instance;
-        std::cout << "Database instance created" << std::endl;
         return _instance;
     }
 

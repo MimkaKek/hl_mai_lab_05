@@ -1,11 +1,42 @@
 version: '3.7'
 services:
+
+  main_gateway:
+    tty: true
+    container_name: main_gateway
+    build:
+      context: .
+      dockerfile: my_service/release_gateway
+    environment:
+      - DB_HOST=postgers_db
+      - DB_PORT=5432
+      - DB_LOGIN=stud
+      - DB_PASSWORD=stud
+      - DB_DATABASE=archdb
+      - MONGO_HOST=mongo_db
+      - MONGO_PORT=27017
+      - MONGO_DATABASE=archdb
+      - REDIS_CACHE_HOST=cache_redis
+      - REDIS_CACHE_PORT=6379
+      - USER_SERVICE_HOST=arch_users
+      - USER_SERVICE_PORT=8080
+      - TRIP_SERVICE_HOST=arch_trips
+      - TRIP_SERVICE_PORT=8080
+      - PARTY_SERVICE_HOST=arch_parties
+      - PARTY_SERVICE_PORT=8080
+      - PATH_SERVICE_HOST=arch_paths
+      - PATH_SERVICE_PORT=8080
+    ports:
+      - 8888:8888
+    networks:
+      - arch-network
+
   arch_users:
     tty: true
     container_name: arch_users
     build:
       context: .
-      dockerfile: my_service/release
+      dockerfile: my_service/release_service
     #   dockerfile: my_service/debug
     # volumes:
     #   - .:/app/
@@ -20,13 +51,17 @@ services:
       - MONGO_DATABASE=archdb
       - USER_SERVICE_HOST=arch_users
       - USER_SERVICE_PORT=8080
+      - TRIP_SERVICE_HOST=arch_trips
+      - TRIP_SERVICE_PORT=8080
       - PARTY_SERVICE_HOST=arch_parties
-      - PARTY_SERVICE_PORT=8082
+      - PARTY_SERVICE_PORT=8080
+      - PATH_SERVICE_HOST=arch_paths
+      - PATH_SERVICE_PORT=8080
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - 8080:8080
+      - 8889:8080
     networks:
       - arch-network
 
@@ -35,7 +70,7 @@ services:
     container_name: arch_trips
     build:
       context: .
-      dockerfile: my_service/release
+      dockerfile: my_service/release_service
     #   dockerfile: my_service/debug
     # volumes:
     #   - .:/app/
@@ -50,13 +85,17 @@ services:
       - MONGO_DATABASE=archdb
       - USER_SERVICE_HOST=arch_users
       - USER_SERVICE_PORT=8080
+      - TRIP_SERVICE_HOST=arch_trips
+      - TRIP_SERVICE_PORT=8080
       - PARTY_SERVICE_HOST=arch_parties
-      - PARTY_SERVICE_PORT=8082
+      - PARTY_SERVICE_PORT=8080
+      - PATH_SERVICE_HOST=arch_paths
+      - PATH_SERVICE_PORT=8080
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - 8081:8080
+      - 8890:8080
     networks:
       - arch-network
 
@@ -65,7 +104,7 @@ services:
     container_name: arch_parties
     build:
       context: .
-      dockerfile: my_service/release
+      dockerfile: my_service/release_service
     #   dockerfile: my_service/debug
     # volumes:
     #   - .:/app/
@@ -80,13 +119,17 @@ services:
       - MONGO_DATABASE=archdb
       - USER_SERVICE_HOST=arch_users
       - USER_SERVICE_PORT=8080
+      - TRIP_SERVICE_HOST=arch_trips
+      - TRIP_SERVICE_PORT=8080
       - PARTY_SERVICE_HOST=arch_parties
-      - PARTY_SERVICE_PORT=8082
+      - PARTY_SERVICE_PORT=8080
+      - PATH_SERVICE_HOST=arch_paths
+      - PATH_SERVICE_PORT=8080
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - 8082:8080
+      - 8891:8080
     networks:
       - arch-network
 
@@ -95,7 +138,7 @@ services:
     container_name: arch_paths
     build:
       context: .
-      dockerfile: my_service/release
+      dockerfile: my_service/release_service
     #   dockerfile: my_service/debug
     # volumes:
     #   - .:/app/
@@ -110,13 +153,17 @@ services:
       - MONGO_DATABASE=archdb
       - USER_SERVICE_HOST=arch_users
       - USER_SERVICE_PORT=8080
+      - TRIP_SERVICE_HOST=arch_trips
+      - TRIP_SERVICE_PORT=8080
       - PARTY_SERVICE_HOST=arch_parties
-      - PARTY_SERVICE_PORT=8082
+      - PARTY_SERVICE_PORT=8080
+      - PATH_SERVICE_HOST=arch_paths
+      - PATH_SERVICE_PORT=8080
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - 8083:8080
+      - 8892:8080
     networks:
       - arch-network
 
@@ -154,6 +201,18 @@ services:
       - '27017:27017'
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+
+  cache_redis:
+    container_name: cache_redis
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning 
+    networks:
+      - arch-network
+    volumes: 
+      - cache:/data
 
 volumes:
   db:
