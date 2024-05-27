@@ -27,10 +27,12 @@ def main() -> None:
         }
         resp = requests.post(f'http://localhost:8888/user', params=params, auth=HTTPBasicAuth(user["login"], user["password"]))
         print(f"User add status: {resp.status_code}")
+        print(f"Response body: {resp.text}")
+        if resp.status_code != 200:
+            users.remove(user)
 
     paths = get_json_arr('paths_init.json')
     for path, user in zip(paths, users):
-        print(user["login"], user["password"])
         try:
             params = {
                 "startpoint": path["startpoint"],
@@ -38,6 +40,7 @@ def main() -> None:
             }
             resp = requests.post(f'http://localhost:8888/path', params=params, auth=HTTPBasicAuth(user["login"], user["password"]))
             print(f"Path add status: {resp.status_code}")
+            print(f"Response body: {resp.text}")
         except Exception:
             pass
     
@@ -54,6 +57,7 @@ def main() -> None:
             }
             resp = requests.post(f'http://localhost:8888/trip', params=params, auth=HTTPBasicAuth(user["login"], user["password"]))
             print(f"Trip add status: {resp.status_code}")
+            print(f"Response body: {resp.text}")
         except Exception:
             pass
 

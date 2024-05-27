@@ -32,7 +32,8 @@ add_executable(${EXAMPLE_BINARY} main.cpp
 add_executable(${EXAMPLE_GATEWAY} api_gateway/main.cpp
                                  config/config.cpp 
                                  database/cache.cpp
-                                 web_server/lib/common.cpp)
+                                 web_server/lib/common.cpp
+                                 web_server/lib/circuitbreaker.cpp)
 
 target_include_directories(${EXAMPLE_BINARY} PRIVATE "${CMAKE_BINARY_DIR}")
 target_include_directories(${EXAMPLE_GATEWAY} PRIVATE "${CMAKE_BINARY_DIR}")
