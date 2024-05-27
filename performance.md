@@ -1,3 +1,5 @@
+
+## NO CACHE
 ### wrk -t4 -c64 -d60s -s get.lua http://127.0.0.1:8888
 ```
 Running 1m test @ http://127.0.0.1:8888
@@ -10,7 +12,7 @@ Running 1m test @ http://127.0.0.1:8888
 Requests/sec:   2498.66
 Transfer/sec:    628.58KB
 ```
-
+## CACHE
 ### wrk -t4 -c64 -d60s -s get.lua http://127.0.0.1:8888
 ```
 Running 1m test @ http://127.0.0.1:8888
