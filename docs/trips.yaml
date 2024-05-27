@@ -4,7 +4,7 @@ info:
   title: 'Arch Lab API'
   description: API для первого домашнего задания по курсу Архитектура программных систем
 servers:
-  - url: http://localhost:8081
+  - url: http://localhost:8890
     description: Trips server
 paths:
   /trips:
@@ -115,13 +115,6 @@ paths:
                 $ref: '#/components/schemas/403'
 components:
   parameters:
-    first_name:
-      name: first_name
-      description: Имя
-      in: query
-      required: true
-      schema:
-        type: string
     id_trip:
       name: id
       description: ID путешествия
@@ -130,28 +123,28 @@ components:
       schema:
         $ref: '#/components/schemas/id_trip'
     id_path:
-      name: id
+      name: id_path
       description: ID маршрута
       in: query
       required: true
       schema:
         $ref: '#/components/schemas/id_path'
     name:
-      name: id
+      name: name
       description: Название путешествия
       in: query
       required: true
       schema:
         $ref: '#/components/schemas/name'
     start_time:
-      name: id
+      name: start_time
       description: Время начала путешествия
       in: query
       required: true
       schema:
         $ref: '#/components/schemas/start_time'
     fin_time:
-      name: id
+      name: fin_time
       description: Время конца путешествия
       in: query
       required: true

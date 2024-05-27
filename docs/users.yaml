@@ -4,7 +4,7 @@ info:
   title: 'Arch Lab API'
   description: API для первого домашнего задания по курсу Архитектура программных систем
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8089
     description: Users server
 paths:
   /user/search:

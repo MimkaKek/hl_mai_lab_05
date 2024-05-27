@@ -4,7 +4,7 @@ info:
   title: 'Arch Lab API'
   description: API для первого домашнего задания по курсу Архитектура программных систем
 servers:
-  - url: http://localhost:8083
+  - url: http://localhost:8892
     description: Paths server
 paths:
   /path/search:
@@ -113,14 +113,14 @@ components:
       schema:
         $ref: '#/components/schemas/id_path'
     startpoint:
-      name: Начало
+      name: startpoint
       description: Место старта
       in: query
       required: true
       schema:
         $ref: '#/components/schemas/startpoint'
     endpoint:
-      name: Конец
+      name: endpoint
       description: Место финиша
       in: query
       required: true
